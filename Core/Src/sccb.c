@@ -1,9 +1,9 @@
 /***
-�ļ�˵����
+文件说明：
 	*
-	*  1.SCCB��غ�����ͬI2Cһ��ʱ��
-	*  2.ʹ��ģ��I2C�ӿڵ���ʽ
-	*	 3.����I2Cͨ���������ƣ�ͨ���ٶ�Ĭ��Ϊ 300KHz ���ң�����ܳ���400K
+	*  1.SCCB相关函数（同I2C一样时序）
+	*  2.使用模拟I2C接口的形式
+	*	 3.限于I2C通信速率限制，通信速度默认为 300KHz 左右，最大不能超过400K
 	*
 	************************************************************************************************************************
 ***/
@@ -12,41 +12,41 @@
 
 
 /*****************************************************************************************
-*	�� �� ��: SCCB_GPIO_Config
-*	��ڲ���: ��
-*	�� �� ֵ: ��
-*	��������: ��ʼ��IIC��GPIO��,�������
-*	˵    ��: ����IICͨ���ٶȲ��ߣ������IO���ٶ�����Ϊ2M����
+*	函 数 名: SCCB_GPIO_Config
+*	入口参数: 无
+*	返 回 值: 无
+*	函数功能: 初始化IIC的GPIO口,推挽输出
+*	说    明: 由于IIC通信速度不高，这里的IO口速度配置为2M即可
 ******************************************************************************************/
 
 void SCCB_GPIO_Config (void)
 {
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
 	
-	SCCB_SCL_CLK_ENABLE;	//��ʼ��IO��ʱ��
+	SCCB_SCL_CLK_ENABLE;	//初始化IO口时钟
 	SCCB_SDA_CLK_ENABLE;
 
-	GPIO_InitStruct.Mode 		= GPIO_MODE_OUTPUT_OD;			// ��©���
-	GPIO_InitStruct.Pull 		= GPIO_NOPULL;						// ����������
-	GPIO_InitStruct.Speed 		= GPIO_SPEED_FREQ_LOW;			// �ٶȵȼ� 
-	GPIO_InitStruct.Pin 			= SCCB_SDA_PIN;				// SDA����
+	GPIO_InitStruct.Mode 		= GPIO_MODE_OUTPUT_OD;			// 开漏输出
+	GPIO_InitStruct.Pull 		= GPIO_NOPULL;						// 不带上下拉
+	GPIO_InitStruct.Speed 		= GPIO_SPEED_FREQ_LOW;			// 速度等级 
+	GPIO_InitStruct.Pin 			= SCCB_SDA_PIN;				// SDA引脚
 	HAL_GPIO_Init(SCCB_SDA_PORT, &GPIO_InitStruct);		
 
-	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;      			// �������
-	GPIO_InitStruct.Pin 			= SCCB_SCL_PIN;				   // SCL����
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;      			// 推挽输出
+	GPIO_InitStruct.Pin 			= SCCB_SCL_PIN;				   // SCL引脚
 	HAL_GPIO_Init(SCCB_SCL_PORT, &GPIO_InitStruct);
 	
-	HAL_GPIO_WritePin(SCCB_SCL_PORT, SCCB_SCL_PIN, GPIO_PIN_SET);		// SCL����ߵ�ƽ
-	HAL_GPIO_WritePin(SCCB_SDA_PORT, SCCB_SDA_PIN, GPIO_PIN_SET);    // SDA����ߵ�ƽ
+	HAL_GPIO_WritePin(SCCB_SCL_PORT, SCCB_SCL_PIN, GPIO_PIN_SET);		// SCL输出高电平
+	HAL_GPIO_WritePin(SCCB_SDA_PORT, SCCB_SDA_PIN, GPIO_PIN_SET);    // SDA输出高电平
 
 }
 
 /*****************************************************************************************
-*	�� �� ��: SCCB_Delay
-*	��ڲ���: a - ��ʱʱ��
-*	�� �� ֵ: ��
-*	��������: ����ʱ����
-*	˵    ��: Ϊ����ֲ�ļ�����Ҷ���ʱ����Ҫ�󲻸ߣ����Բ���Ҫʹ�ö�ʱ������ʱ
+*	函 数 名: SCCB_Delay
+*	入口参数: a - 延时时间
+*	返 回 值: 无
+*	函数功能: 简单延时函数
+*	说    明: 为了移植的简便性且对延时精度要求不高，所以不需要使用定时器做延时
 ******************************************************************************************/
 
 void SCCB_Delay(uint32_t a)
@@ -59,11 +59,11 @@ void SCCB_Delay(uint32_t a)
 }
 
 /*****************************************************************************************
-*	�� �� ��: SCCB_Start
-*	��ڲ���: ��
-*	�� �� ֵ: ��
-*	��������: IIC��ʼ�ź�
-*	˵    ��: ��SCL���ڸߵ�ƽ�ڼ䣬SDA�ɸߵ�������Ϊ��ʼ�ź�
+*	函 数 名: SCCB_Start
+*	入口参数: 无
+*	返 回 值: 无
+*	函数功能: IIC起始信号
+*	说    明: 在SCL处于高电平期间，SDA由高到低跳变为起始信号
 ******************************************************************************************/
 
 void SCCB_Start(void)
@@ -79,11 +79,11 @@ void SCCB_Start(void)
 }
 
 /*****************************************************************************************
-*	�� �� ��: SCCB_Stop
-*	��ڲ���: ��
-*	�� �� ֵ: ��
-*	��������: IICֹͣ�ź�
-*	˵    ��: ��SCL���ڸߵ�ƽ�ڼ䣬SDA�ɵ͵�������Ϊ��ʼ�ź�
+*	函 数 名: SCCB_Stop
+*	入口参数: 无
+*	返 回 值: 无
+*	函数功能: IIC停止信号
+*	说    明: 在SCL处于高电平期间，SDA由低到高跳变为起始信号
 ******************************************************************************************/
 
 void SCCB_Stop(void)
@@ -100,11 +100,11 @@ void SCCB_Stop(void)
 }
 
 /*****************************************************************************************
-*	�� �� ��: SCCB_ACK
-*	��ڲ���: ��
-*	�� �� ֵ: ��
-*	��������: IICӦ���ź�
-*	˵    ��: ��SCLΪ�ߵ�ƽ�ڼ䣬SDA�������Ϊ�͵�ƽ������Ӧ���ź�
+*	函 数 名: SCCB_ACK
+*	入口参数: 无
+*	返 回 值: 无
+*	函数功能: IIC应答信号
+*	说    明: 在SCL为高电平期间，SDA引脚输出为低电平，产生应答信号
 ******************************************************************************************/
 
 void SCCB_ACK(void)
@@ -116,7 +116,7 @@ void SCCB_ACK(void)
 	SCCB_SCL(1);
 	SCCB_Delay(SCCB_DelayVaule);
 	
-	SCCB_SCL(0);		// SCL�����ʱ��SDAӦ�������ߣ��ͷ�����
+	SCCB_SCL(0);		// SCL输出低时，SDA应立即拉高，释放总线
 	SCCB_SDA(1);		
 	
 	SCCB_Delay(SCCB_DelayVaule);
@@ -124,11 +124,11 @@ void SCCB_ACK(void)
 }
 
 /*****************************************************************************************
-*	�� �� ��: SCCB_NoACK
-*	��ڲ���: ��
-*	�� �� ֵ: ��
-*	��������: IIC��Ӧ���ź�
-*	˵    ��: ��SCLΪ�ߵ�ƽ�ڼ䣬��SDA����Ϊ�ߵ�ƽ��������Ӧ���ź�
+*	函 数 名: SCCB_NoACK
+*	入口参数: 无
+*	返 回 值: 无
+*	函数功能: IIC非应答信号
+*	说    明: 在SCL为高电平期间，若SDA引脚为高电平，产生非应答信号
 ******************************************************************************************/
 
 void SCCB_NoACK(void)
@@ -145,11 +145,11 @@ void SCCB_NoACK(void)
 }
 
 /*****************************************************************************************
-*	�� �� ��: SCCB_WaitACK
-*	��ڲ���: ��
-*	�� �� ֵ: ��
-*	��������: �ȴ������豸����Ӧ���ź�
-*	˵    ��: ��SCLΪ�ߵ�ƽ�ڼ䣬����⵽SDA����Ϊ�͵�ƽ��������豸��Ӧ����
+*	函 数 名: SCCB_WaitACK
+*	入口参数: 无
+*	返 回 值: 无
+*	函数功能: 等待接收设备发出应答信号
+*	说    明: 在SCL为高电平期间，若检测到SDA引脚为低电平，则接收设备响应正常
 ******************************************************************************************/
 
 uint8_t SCCB_WaitACK(void)
@@ -159,27 +159,27 @@ uint8_t SCCB_WaitACK(void)
 	SCCB_SCL(1);
 	SCCB_Delay(SCCB_DelayVaule);	
 	
-	if( HAL_GPIO_ReadPin(SCCB_SDA_PORT,SCCB_SDA_PIN) != 0) //�ж��豸�Ƿ���������Ӧ		
+	if( HAL_GPIO_ReadPin(SCCB_SDA_PORT,SCCB_SDA_PIN) != 0) //判断设备是否有做出响应		
 	{
 		SCCB_SCL(0);	
 		SCCB_Delay( SCCB_DelayVaule );		
-		return ACK_ERR;	//��Ӧ��
+		return ACK_ERR;	//无应答
 	}
 	else
 	{
 		SCCB_SCL(0);	
 		SCCB_Delay( SCCB_DelayVaule );		
-		return ACK_OK;	//Ӧ������
+		return ACK_OK;	//应答正常
 	}
 }
 
 /*****************************************************************************************
-*	�� �� ��:	SCCB_WriteByte
-*	��ڲ���:	IIC_Data - Ҫд���8λ����
-*	�� �� ֵ:	ACK_OK  - �豸��Ӧ����
-*          	   ACK_ERR - �豸��Ӧ����
-*	��������:	дһ�ֽ�����
-*	˵    ��:   ��λ��ǰ
+*	函 数 名:	SCCB_WriteByte
+*	入口参数:	IIC_Data - 要写入的8位数据
+*	返 回 值:	ACK_OK  - 设备响应正常
+*          	   ACK_ERR - 设备响应错误
+*	函数功能:	写一字节数据
+*	说    明:   高位在前
 ******************************************************************************************/
 
 uint8_t SCCB_WriteByte(uint8_t IIC_Data)
@@ -201,17 +201,17 @@ uint8_t SCCB_WriteByte(uint8_t IIC_Data)
 		IIC_Data <<= 1;
 	}
 
-	return SCCB_WaitACK(); //�ȴ��豸��Ӧ
+	return SCCB_WaitACK(); //等待设备响应
 }
 
 /*****************************************************************************************
-*	�� �� ��:	SCCB_ReadByte
-*	��ڲ���:	ACK_Mode - ��Ӧģʽ������1�򷢳�Ӧ���źţ�����0������Ӧ���ź�
-*	�� �� ֵ:	ACK_OK  - �豸��Ӧ����
-*          	   ACK_ERR - �豸��Ӧ����
-*	��������:   ��һ�ֽ�����
-*	˵    ��:   1.��λ��ǰ
-*				   2.Ӧ�������������һ�ֽ�����ʱ���ͷ�Ӧ���ź�
+*	函 数 名:	SCCB_ReadByte
+*	入口参数:	ACK_Mode - 响应模式，输入1则发出应答信号，输入0发出非应答信号
+*	返 回 值:	ACK_OK  - 设备响应正常
+*          	   ACK_ERR - 设备响应错误
+*	函数功能:   读一字节数据
+*	说    明:   1.高位在前
+*				   2.应在主机接收最后一字节数据时发送非应答信号
 ******************************************************************************************/
 
 uint8_t SCCB_ReadByte(uint8_t ACK_Mode)
@@ -230,95 +230,95 @@ uint8_t SCCB_ReadByte(uint8_t ACK_Mode)
 		SCCB_Delay( SCCB_DelayVaule );
 	}
 	
-	if ( ACK_Mode == 1 )				//	Ӧ���ź�
+	if ( ACK_Mode == 1 )				//	应答信号
 		SCCB_ACK();
 	else
-		SCCB_NoACK();		 	// ��Ӧ���ź�
+		SCCB_NoACK();		 	// 非应答信号
 	
 	return IIC_Data; 
 }
 
 
 /*************************************************************************************************************************************
-*	�� �� ��:	SCCB_WriteHandle
+*	函 数 名:	SCCB_WriteHandle
 *
-*	��ڲ���:	addr - Ҫ���в����ļĴ���(8λ��ַ)
+*	入口参数:	addr - 要进行操作的寄存器(8位地址)
 *
-*	�� �� ֵ:	SUCCESS - �����ɹ���ERROR	  - ����ʧ��
+*	返 回 值:	SUCCESS - 操作成功，ERROR	  - 操作失败
 *					
-*	��������:	��ָ���ļĴ���(8λ��ַ)ִ��д������OV2640�õ�
+*	函数功能:	对指定的寄存器(8位地址)执行写操作，OV2640用到
 ************************************************************************************************************************************/
 
 uint8_t SCCB_WriteHandle (uint8_t addr)
 {
-	uint8_t status;		// ״̬��־λ
+	uint8_t status;		// 状态标志位
 
-	SCCB_Start();	// ����IICͨ��
-	if( SCCB_WriteByte(OV2640_DEVICE_ADDRESS) == ACK_OK ) //д����ָ��
+	SCCB_Start();	// 启动IIC通信
+	if( SCCB_WriteByte(OV2640_DEVICE_ADDRESS) == ACK_OK ) //写数据指令
 	{
 		if( SCCB_WriteByte((uint8_t)(addr)) != ACK_OK )
 		{
-			status = ERROR;	// ����ʧ��
+			status = ERROR;	// 操作失败
 		}			
 	}
-	status = SUCCESS;	// �����ɹ�
+	status = SUCCESS;	// 操作成功
 	return status;	
 }
 
 /*************************************************************************************************************************************
-*	�� �� ��:	SCCB_WriteReg
+*	函 数 名:	SCCB_WriteReg
 *
-*	��ڲ���:	addr - Ҫд��ļĴ���(8λ��ַ)��value - Ҫд�������
+*	入口参数:	addr - 要写入的寄存器(8位地址)，value - 要写入的数据
 *					
-*	�� �� ֵ:	SUCCESS - �����ɹ��� ERROR	  - ����ʧ��
+*	返 回 值:	SUCCESS - 操作成功， ERROR	  - 操作失败
 *					
-*	��������:	��ָ���ļĴ���(8λ��ַ)дһ�ֽ����ݣ�OV2640�õ�
+*	函数功能:	对指定的寄存器(8位地址)写一字节数据，OV2640用到
 ************************************************************************************************************************************/
 
 uint8_t SCCB_WriteReg (uint8_t addr,uint8_t value)
 {
 	uint8_t status;
 	
-	SCCB_Start(); //����IICͨѶ
+	SCCB_Start(); //启动IIC通讯
 
-	if( SCCB_WriteHandle(addr) == SUCCESS)	//д��Ҫ�����ļĴ���
+	if( SCCB_WriteHandle(addr) == SUCCESS)	//写入要操作的寄存器
 	{
-		if (SCCB_WriteByte(value) != ACK_OK) //д����
+		if (SCCB_WriteByte(value) != ACK_OK) //写数据
 		{
 			status = ERROR;						
 		}
 	}	
-	SCCB_Stop(); // ֹͣͨѶ
+	SCCB_Stop(); // 停止通讯
 	
-	status = SUCCESS;	// д��ɹ�
+	status = SUCCESS;	// 写入成功
 	return status;
 }
 /*************************************************************************************************************************************
-*	�� �� ��:	SCCB_ReadReg
+*	函 数 名:	SCCB_ReadReg
 *
-*	��ڲ���:	addr - Ҫ��ȡ�ļĴ���(8λ��ַ)
+*	入口参数:	addr - 要读取的寄存器(8位地址)
 *					
-*	�� �� ֵ:	����������
+*	返 回 值:	读到的数据
 *					
-*	��������:	��ָ���ļĴ���(8λ��ַ)��ȡһ�ֽ����ݣ�OV2640�õ�
+*	函数功能:	对指定的寄存器(8位地址)读取一字节数据，OV2640用到
 ************************************************************************************************************************************/
 
 uint8_t SCCB_ReadReg (uint8_t addr)
 {
    uint8_t value = 0;
 
-	SCCB_Start();		// ����IICͨ��
+	SCCB_Start();		// 启动IIC通信
 
-	if( SCCB_WriteHandle(addr) == SUCCESS) //д��Ҫ�����ļĴ���
+	if( SCCB_WriteHandle(addr) == SUCCESS) //写入要操作的寄存器
 	{
-      SCCB_Stop();	// ֹͣIICͨ��
-		SCCB_Start(); //��������IICͨѶ
+      SCCB_Stop();	// 停止IIC通信
+		SCCB_Start(); //重新启动IIC通讯
 
-		if (SCCB_WriteByte(OV2640_DEVICE_ADDRESS|0X01) == ACK_OK)	// ���Ͷ�����
+		if (SCCB_WriteByte(OV2640_DEVICE_ADDRESS|0X01) == ACK_OK)	// 发送读命令
 		{	
-			value = SCCB_ReadByte(0);	// �������һ������ʱ���� ��Ӧ���ź�
+			value = SCCB_ReadByte(0);	// 读到最后一个数据时发送 非应答信号
 		}					
-		SCCB_Stop();	// ֹͣIICͨ��
+		SCCB_Stop();	// 停止IIC通信
 
 	}
 
@@ -326,89 +326,89 @@ uint8_t SCCB_ReadReg (uint8_t addr)
 }
 
 /*************************************************************************************************************************************
-*	�� �� ��:	SCCB_WriteHandle_16Bit
+*	函 数 名:	SCCB_WriteHandle_16Bit
 *
-*	��ڲ���:	addr - Ҫ���в����ļĴ���(16λ��ַ)
+*	入口参数:	addr - 要进行操作的寄存器(16位地址)
 *
-*	�� �� ֵ:	SUCCESS - �����ɹ���ERROR - ����ʧ��
+*	返 回 值:	SUCCESS - 操作成功，ERROR - 操作失败
 *					
-*	��������:	��ָ���ļĴ���(16λ��ַ)ִ��д������OV5640�õ�
+*	函数功能:	对指定的寄存器(16位地址)执行写操作，OV5640用到
 ************************************************************************************************************************************/
 
 uint8_t SCCB_WriteHandle_16Bit (uint16_t addr)
 {
-	uint8_t status;		// ״̬��־λ
+	uint8_t status;		// 状态标志位
 
-	SCCB_Start();	// ����IICͨ��
-	if( SCCB_WriteByte(OV5640_DEVICE_ADDRESS) == ACK_OK ) //д����ָ��
+	SCCB_Start();	// 启动IIC通信
+	if( SCCB_WriteByte(OV5640_DEVICE_ADDRESS) == ACK_OK ) //写数据指令
 	{
-		if( SCCB_WriteByte((uint8_t)(addr >> 8)) == ACK_OK ) //д��16λ��ַ
+		if( SCCB_WriteByte((uint8_t)(addr >> 8)) == ACK_OK ) //写入16位地址
 		{
 			if( SCCB_WriteByte((uint8_t)(addr)) != ACK_OK )
 			{
-				status = ERROR;	// ����ʧ��
+				status = ERROR;	// 操作失败
 			}			
 		}		
 	}
-	status = SUCCESS;	// �����ɹ�
+	status = SUCCESS;	// 操作成功
 	return status;	
 }
 
 /*************************************************************************************************************************************
-*	�� �� ��:	SCCB_WriteReg_16Bit
+*	函 数 名:	SCCB_WriteReg_16Bit
 *
-*	��ڲ���:	addr - Ҫд��ļĴ���(16λ��ַ)  value - Ҫд�������
+*	入口参数:	addr - 要写入的寄存器(16位地址)  value - 要写入的数据
 *					
-*	�� �� ֵ:	SUCCESS - �����ɹ���ERROR	  - ����ʧ��
+*	返 回 值:	SUCCESS - 操作成功，ERROR	  - 操作失败
 *					
-*	��������:	��ָ���ļĴ���(16λ��ַ)дһ�ֽ����ݣ�OV5640�õ�
+*	函数功能:	对指定的寄存器(16位地址)写一字节数据，OV5640用到
 ************************************************************************************************************************************/
 
 uint8_t SCCB_WriteReg_16Bit(uint16_t addr,uint8_t value)
 {
 	uint8_t status;
 	
-	SCCB_Start(); //����IICͨѶ
+	SCCB_Start(); //启动IIC通讯
 
-	if( SCCB_WriteHandle_16Bit(addr) == SUCCESS)	//д��Ҫ�����ļĴ���
+	if( SCCB_WriteHandle_16Bit(addr) == SUCCESS)	//写入要操作的寄存器
 	{
-		if (SCCB_WriteByte(value) != ACK_OK) //д����
+		if (SCCB_WriteByte(value) != ACK_OK) //写数据
 		{
 			status = ERROR;						
 		}
 	}	
-	SCCB_Stop(); // ֹͣͨѶ
+	SCCB_Stop(); // 停止通讯
 	
-	status = SUCCESS;	// д��ɹ�
+	status = SUCCESS;	// 写入成功
 	return status;
 }
 
 /*************************************************************************************************************************************
-*	�� �� ��:	SCCB_ReadReg_16Bit
+*	函 数 名:	SCCB_ReadReg_16Bit
 *
-*	��ڲ���:	addr - Ҫ��ȡ�ļĴ���(16λ��ַ)
+*	入口参数:	addr - 要读取的寄存器(16位地址)
 *					
-*	�� �� ֵ:	����������
+*	返 回 值:	读到的数据
 *					
-*	��������:	��ָ���ļĴ���(16λ��ַ)��ȡһ�ֽ����ݣ�OV5640�õ�
+*	函数功能:	对指定的寄存器(16位地址)读取一字节数据，OV5640用到
 ************************************************************************************************************************************/
 
 uint8_t SCCB_ReadReg_16Bit (uint16_t addr)
 {
    uint8_t value = 0;
 
-	SCCB_Start();		// ����IICͨ��
+	SCCB_Start();		// 启动IIC通信
 
-	if( SCCB_WriteHandle_16Bit(addr) == SUCCESS) //д��Ҫ�����ļĴ���
+	if( SCCB_WriteHandle_16Bit(addr) == SUCCESS) //写入要操作的寄存器
 	{
-      SCCB_Stop();	// ֹͣIICͨ��
-		SCCB_Start(); //��������IICͨѶ
+      SCCB_Stop();	// 停止IIC通信
+		SCCB_Start(); //重新启动IIC通讯
 
-		if (SCCB_WriteByte(OV5640_DEVICE_ADDRESS|0X01) == ACK_OK)	// ���Ͷ�����
+		if (SCCB_WriteByte(OV5640_DEVICE_ADDRESS|0X01) == ACK_OK)	// 发送读命令
 		{	
-			value = SCCB_ReadByte(0);	// �������һ������ʱ���� ��Ӧ���ź�
+			value = SCCB_ReadByte(0);	// 读到最后一个数据时发送 非应答信号
 		}					
-		SCCB_Stop();	// ֹͣIICͨ��
+		SCCB_Stop();	// 停止IIC通信
 
 	}
 
@@ -416,13 +416,13 @@ uint8_t SCCB_ReadReg_16Bit (uint16_t addr)
 }
 
 /*************************************************************************************************************************************
-*	�� �� ��:	SCCB_WriteBuffer_16Bit
+*	函 数 名:	SCCB_WriteBuffer_16Bit
 *
-*	��ڲ���:	addr - Ҫд��ļĴ���(16λ��ַ)  *pData - ������   size - Ҫ�������ݵĴ�С
+*	入口参数:	addr - 要写入的寄存器(16位地址)  *pData - 数据区   size - 要传输数据的大小
 *					
-*	�� �� ֵ:	SUCCESS - �����ɹ���ERROR	  - ����ʧ��
+*	返 回 值:	SUCCESS - 操作成功，ERROR	  - 操作失败
 *					
-*	��������:	��ָ���ļĴ���(16λ��ַ)����д���ݣ�OV5640 д���Զ��Խ��̼�ʱ�õ�
+*	函数功能:	对指定的寄存器(16位地址)批量写数据，OV5640 写入自动对焦固件时用到
 ************************************************************************************************************************************/
 
 uint8_t SCCB_WriteBuffer_16Bit(uint16_t addr,uint8_t *pData, uint32_t size)
@@ -430,19 +430,19 @@ uint8_t SCCB_WriteBuffer_16Bit(uint16_t addr,uint8_t *pData, uint32_t size)
 	uint8_t status;	
 	uint32_t i;
 	
-	SCCB_Start(); //����IICͨѶ
+	SCCB_Start(); //启动IIC通讯
 
-	if( SCCB_WriteHandle_16Bit(addr) == SUCCESS)	//д��Ҫ�����ļĴ���
+	if( SCCB_WriteHandle_16Bit(addr) == SUCCESS)	//写入要操作的寄存器
 	{
 		for(i=0;i<size;i++)
 		{
-			SCCB_WriteByte(*pData);//д����			
+			SCCB_WriteByte(*pData);//写数据			
 			pData++;
 		}
 	}	
-	SCCB_Stop(); // ֹͣͨѶ
+	SCCB_Stop(); // 停止通讯
 	
-	status = SUCCESS;	// д��ɹ�
+	status = SUCCESS;	// 写入成功
 	return status;
 }
 /********************************************************************************************/

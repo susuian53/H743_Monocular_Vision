@@ -4,33 +4,33 @@
 #include <stdint.h>
 
 
-// ×ÖÌåÏà¹Ø½á¹¹¶¨Òå
+// å­—ä½“ç›¸å…³ç»“æ„å®šä¹‰
 typedef struct _pFont
 {    
-	const uint8_t 		*pTable;  		//	×ÖÄ£Êı×éµØÖ·
-	uint16_t 					Width; 		 		//	µ¥¸ö×Ö·ûµÄ×ÖÄ£¿í¶È
-	uint16_t 					Height; 			//	µ¥¸ö×Ö·ûµÄ×ÖÄ£³¤¶È
-	uint16_t 					Sizes;	 			//	µ¥¸ö×Ö·ûµÄ×ÖÄ£Êı¾İ¸öÊı
-	uint16_t					Table_Rows;		// ¸Ã²ÎÊıÖ»ÓĞºº×Ö×ÖÄ£ÓÃµ½£¬±íÊ¾¶şÎ¬Êı×éµÄĞĞ´óĞ¡
+	const uint8_t 		*pTable;  		//	å­—æ¨¡æ•°ç»„åœ°å€
+	uint16_t 					Width; 		 		//	å•ä¸ªå­—ç¬¦çš„å­—æ¨¡å®½åº¦
+	uint16_t 					Height; 			//	å•ä¸ªå­—ç¬¦çš„å­—æ¨¡é•¿åº¦
+	uint16_t 					Sizes;	 			//	å•ä¸ªå­—ç¬¦çš„å­—æ¨¡æ•°æ®ä¸ªæ•°
+	uint16_t					Table_Rows;		// è¯¥å‚æ•°åªæœ‰æ±‰å­—å­—æ¨¡ç”¨åˆ°ï¼Œè¡¨ç¤ºäºŒç»´æ•°ç»„çš„è¡Œå¤§å°
 } pFONT;
 
 
-/*------------------------------------ ÖĞÎÄ×ÖÌå ---------------------------------------------*/
+/*------------------------------------ ä¸­æ–‡å­—ä½“ ---------------------------------------------*/
 
-extern	pFONT	CN_Font12 ;		//	12*12µãÕó×ÖÌå
-extern	pFONT	CN_Font16 ;    //	16*16µãÕó×ÖÌå
-extern	pFONT	CN_Font20 ;    //	20*20µãÕó×ÖÌå
-extern	pFONT	CN_Font24 ;    //	24*24µãÕó×ÖÌå
-extern	pFONT	CN_Font32 ;    //	32*32µãÕó×ÖÌå
+extern	pFONT	CN_Font12 ;		//	12*12ç‚¹é˜µå­—ä½“
+extern	pFONT	CN_Font16 ;    //	16*16ç‚¹é˜µå­—ä½“
+extern	pFONT	CN_Font20 ;    //	20*20ç‚¹é˜µå­—ä½“
+extern	pFONT	CN_Font24 ;    //	24*24ç‚¹é˜µå­—ä½“
+extern	pFONT	CN_Font32 ;    //	32*32ç‚¹é˜µå­—ä½“
 
 
-/*------------------------------------ ASCII×ÖÌå ---------------------------------------------*/
+/*------------------------------------ ASCIIå­—ä½“ ---------------------------------------------*/
 
-extern pFONT ASCII_Font32;		// 32*16µãÕó×ÖÌå
-extern pFONT ASCII_Font24;		// 24*12µãÕó×ÖÌå
-extern pFONT ASCII_Font20; 		// 20*10µãÕó×ÖÌå
-extern pFONT ASCII_Font16; 		// 16*08µãÕó×ÖÌå
-extern pFONT ASCII_Font12; 		// 12*06µãÕó×ÖÌå
+extern pFONT ASCII_Font32;		// 32*16ç‚¹é˜µå­—ä½“
+extern pFONT ASCII_Font24;		// 24*12ç‚¹é˜µå­—ä½“
+extern pFONT ASCII_Font20; 		// 20*10ç‚¹é˜µå­—ä½“
+extern pFONT ASCII_Font16; 		// 16*08ç‚¹é˜µå­—ä½“
+extern pFONT ASCII_Font12; 		// 12*06ç‚¹é˜µå­—ä½“
 
 #endif 
  

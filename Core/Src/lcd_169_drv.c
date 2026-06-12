@@ -1199,4 +1199,450 @@ void 	LCD_DrawImage(uint16_t x,uint16_t y,uint16_t width,uint16_t height,const u
    uint16_t  Buff_Height = 0;    // ������������
 
 // ��Ϊ��������С���ޣ���Ҫ�ֶ��д��
-   Buff_Height = (sizeof(LCD_Buff)/2) / height;    // ���㻺�����ܹ�д��ͼƬ�Ķ�����
+   Buff_Height = (sizeof(LCD_Buff)/2) / height;    // ���㻺�����ܹ�д��ͼƬ�Ķ�����
+
+	for(i = 0; i <height; i++)             // ѭ������д��
+	{
+		for(j = 0; j <(float)width/8; j++)  
+		{
+			disChar = *pImage;
+
+			for(m = 0; m < 8; m++)
+			{ 
+				if(disChar & 0x01)	
+				{		
+               LCD_Buff[BuffCount] =  TFT_Ptr.Color;			// ��ǰģֵ��Ϊ0ʱ��ʹ�û���ɫ���
+				}
+				else		
+				{		
+				   LCD_Buff[BuffCount] = TFT_Ptr.BkgColor;		//����ʹ�ñ���ɫ���Ƶ�
+				}
+				disChar >>= 1;     // ģֵ��λ
+				Xaddress++;        // ˮƽ�����Լ�
+				BuffCount++;       // ����������       
+				if( (Xaddress - x)==width ) // ���ˮƽ����ﵽ���ַ����ȣ����˳���ǰѭ��,������һ�еĻ���		
+				{											 
+					Xaddress = x;				                 
+					break;
+				}
+			}	
+			pImage++;			
+		}
+      if( BuffCount == Buff_Height*width  )  // �ﵽ�������������ɵ��������ʱ
+      {
+         BuffCount = 0; // ������������0
+
+         LCD_SetAddress( x, Yaddress , x+width-1, Yaddress+Buff_Height-1);	// ��������	
+         LCD_WriteBuff(LCD_Buff,width*Buff_Height);          // д���Դ�     
+
+         Yaddress = Yaddress+Buff_Height;    // ������ƫ�ƣ���ʼд����һ��������
+      }     
+      if( (i+1)== height ) // �������һ��ʱ
+      {
+         LCD_SetAddress( x, Yaddress , x+width-1,i+y);	   // ��������	
+         LCD_WriteBuff(LCD_Buff,width*(i+1+y-Yaddress));    // д���Դ�     
+      }
+	}	
+}
+
+
+/***************************************************************************************************************************************
+*	�� �� ��: LCD_CopyBuffer
+*
+*	��ڲ���: x - ��ʼˮƽ����
+*				 y - ��ʼ��ֱ����
+*			 	 width  - Ŀ�������ˮƽ����
+*				 height - Ŀ������Ĵ�ֱ����
+*				*pImage - ���ݴ洢�����׵�ַ
+*
+*	��������: ��ָ�����괦��ֱ�ӽ����ݸ��Ƶ���Ļ���Դ�
+*
+*	˵    ��: �������ƺ�������������ֲ LVGL ���߽�����ͷ�ɼ���ͼ����ʾ����
+*						 
+*****************************************************************************************************************************************/
+
+void	LCD_CopyBuffer(uint16_t x, uint16_t y,uint16_t width,uint16_t height,uint16_t *DataBuff)
+{
+	
+	LCD_SetAddress(x,y,x+width-1,y+height-1);
+  // �޸�Ϊ16λ���ݿ��ȣ�д�����ݸ���Ч�ʣ�����Ҫ���	
+	LCD_SPI.Init.DataSize 	= SPI_DATASIZE_16BIT;   //	16λ���ݿ���
+  HAL_SPI_Init(&LCD_SPI);	
+	TFT_DC_D;     // ����ָ��ѡ�� ��������ߵ�ƽ���������δ��� ����	
+  LCD_CSL;  //����NSS���ţ���ʼ���� 
+	
+	LCD_SPI_TransmitBuffer(&LCD_SPI, DataBuff,width * height) ;
+	LCD_CSH;  //����NSS���ţ���ʼ����
+//	HAL_SPI_Transmit(&hspi5, (uint8_t *)DataBuff, (x2-x1+1) * (y2-y1+1), 1000) ;
+	
+// �Ļ�8λ���ݿ��ȣ���Ϊָ��Ͳ������ݶ��ǰ���8λ�����
+	LCD_SPI.Init.DataSize 	= SPI_DATASIZE_8BIT;    //	8λ���ݿ���
+   HAL_SPI_Init(&LCD_SPI);		
+	
+}
+
+/******************************
+*
+* ���¼��������޸���HAL�Ŀ⺯����Ŀ����Ϊ��SPI�������ݲ������ݳ��ȵ�д�룬��������������ٶ�
+*
+********************************/
+
+
+/**
+  * @brief Handle SPI Communication Timeout.
+  * @param hspi: pointer to a SPI_HandleTypeDef structure that contains
+  *              the configuration information for SPI module.
+  * @param Flag: SPI flag to check
+  * @param Status: flag state to check
+  * @param Timeout: Timeout duration
+  * @param Tickstart: Tick start value
+  * @retval HAL status
+  */
+HAL_StatusTypeDef LCD_SPI_WaitOnFlagUntilTimeout(SPI_HandleTypeDef *hspi, uint32_t Flag, FlagStatus Status,
+                                                    uint32_t Tickstart, uint32_t Timeout)
+{
+   /* Wait until flag is set */
+   while ((__HAL_SPI_GET_FLAG(hspi, Flag) ? SET : RESET) == Status)
+   {
+      /* Check for the Timeout */
+      if ((((HAL_GetTick() - Tickstart) >=  Timeout) && (Timeout != HAL_MAX_DELAY)) || (Timeout == 0U))
+      {
+         return HAL_TIMEOUT;
+      }
+   }
+   return HAL_OK;
+}
+
+
+/**
+ * @brief  Close Transfer and clear flags.
+ * @param  hspi: pointer to a SPI_HandleTypeDef structure that contains
+ *               the configuration information for SPI module.
+ * @retval HAL_ERROR: if any error detected
+ *         HAL_OK: if nothing detected
+ */
+ void LCD_SPI_CloseTransfer(SPI_HandleTypeDef *hspi)
+{
+  uint32_t itflag = hspi->Instance->SR;
+
+  __HAL_SPI_CLEAR_EOTFLAG(hspi);
+  __HAL_SPI_CLEAR_TXTFFLAG(hspi);
+
+  /* Disable SPI peripheral */
+  __HAL_SPI_DISABLE(hspi);
+
+  /* Disable ITs */
+  __HAL_SPI_DISABLE_IT(hspi, (SPI_IT_EOT | SPI_IT_TXP | SPI_IT_RXP | SPI_IT_DXP | SPI_IT_UDR | SPI_IT_OVR | SPI_IT_FRE | SPI_IT_MODF));
+
+  /* Disable Tx DMA Request */
+  CLEAR_BIT(hspi->Instance->CFG1, SPI_CFG1_TXDMAEN | SPI_CFG1_RXDMAEN);
+
+  /* Report UnderRun error for non RX Only communication */
+  if (hspi->State != HAL_SPI_STATE_BUSY_RX)
+  {
+    if ((itflag & SPI_FLAG_UDR) != 0UL)
+    {
+      SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_UDR);
+      __HAL_SPI_CLEAR_UDRFLAG(hspi);
+    }
+  }
+
+  /* Report OverRun error for non TX Only communication */
+  if (hspi->State != HAL_SPI_STATE_BUSY_TX)
+  {
+    if ((itflag & SPI_FLAG_OVR) != 0UL)
+    {
+      SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_OVR);
+      __HAL_SPI_CLEAR_OVRFLAG(hspi);
+    }
+  }
+
+  /* SPI Mode Fault error interrupt occurred -------------------------------*/
+  if ((itflag & SPI_FLAG_MODF) != 0UL)
+  {
+    SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_MODF);
+    __HAL_SPI_CLEAR_MODFFLAG(hspi);
+  }
+
+  /* SPI Frame error interrupt occurred ------------------------------------*/
+  if ((itflag & SPI_FLAG_FRE) != 0UL)
+  {
+    SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_FRE);
+    __HAL_SPI_CLEAR_FREFLAG(hspi);
+  }
+
+  hspi->TxXferCount = (uint16_t)0UL;
+  hspi->RxXferCount = (uint16_t)0UL;
+}
+
+
+/**
+  * @brief  רΪ��Ļ�������޸ģ�����Ҫ��������ɫ��������
+  * @param  hspi   : spi�ľ��
+  * @param  pData  : Ҫд�������
+  * @param  Size   : ���ݴ�С
+  * @retval HAL status
+  */
+
+HAL_StatusTypeDef LCD_SPI_Transmit(SPI_HandleTypeDef *hspi,uint16_t pData, uint32_t Size)
+{
+   uint32_t    tickstart;  
+   uint32_t    Timeout = 1000;      // ��ʱ�ж�
+   uint32_t    LCD_pData_32bit;     // ��32λ����ʱ������
+   uint32_t    LCD_TxDataCount;     // �������
+   HAL_StatusTypeDef errorcode = HAL_OK;
+
+	/* Check Direction parameter */
+	assert_param(IS_SPI_DIRECTION_2LINES_OR_1LINE_2LINES_TXONLY(hspi->Init.Direction));
+
+	/* Process Locked */
+	__HAL_LOCK(hspi);
+
+	/* Init tickstart for timeout management*/
+	tickstart = HAL_GetTick();
+
+	if (hspi->State != HAL_SPI_STATE_READY)
+	{
+		errorcode = HAL_BUSY;
+		__HAL_UNLOCK(hspi);
+		return errorcode;
+	}
+
+	if ( Size == 0UL)
+	{
+		errorcode = HAL_ERROR;
+		__HAL_UNLOCK(hspi);
+		return errorcode;
+	}
+
+	/* Set the transaction information */
+	hspi->State       = HAL_SPI_STATE_BUSY_TX;
+	hspi->ErrorCode   = HAL_SPI_ERROR_NONE;
+
+	LCD_TxDataCount   = Size;                // ��������ݳ���
+	LCD_pData_32bit   = (pData<<16)|pData ;  // ��32λ����ʱ���ϲ�2�����ص����ɫ  
+
+	/*Init field not used in handle to zero */
+	hspi->pRxBuffPtr  = NULL;
+	hspi->RxXferSize  = (uint16_t) 0UL;
+	hspi->RxXferCount = (uint16_t) 0UL;
+	hspi->TxISR       = NULL;
+	hspi->RxISR       = NULL;
+
+	/* Configure communication direction : 1Line */
+	if (hspi->Init.Direction == SPI_DIRECTION_1LINE)
+	{
+		SPI_1LINE_TX(hspi);
+	}
+
+// ��ʹ��Ӳ�� TSIZE ���ƣ��˴�����Ϊ0���������ƴ�������ݳ���
+	MODIFY_REG(hspi->Instance->CR2, SPI_CR2_TSIZE, 0);
+
+	/* Enable SPI peripheral */
+	__HAL_SPI_ENABLE(hspi);
+
+	if (hspi->Init.Mode == SPI_MODE_MASTER)
+	{
+		 /* Master transfer start */
+		 SET_BIT(hspi->Instance->CR1, SPI_CR1_CSTART);
+	}
+
+	/* Transmit data in 16 Bit mode */
+	while (LCD_TxDataCount > 0UL)
+	{
+		/* Wait until TXP flag is set to send data */
+		if (__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_TXP))
+		{
+			if ((hspi->TxXferCount > 1UL) && (hspi->Init.FifoThreshold > SPI_FIFO_THRESHOLD_01DATA))
+			{
+				*((__IO uint32_t *)&hspi->Instance->TXDR) = (uint32_t )LCD_pData_32bit;
+				LCD_TxDataCount -= (uint16_t)2UL;
+			}
+			else
+			{
+				*((__IO uint16_t *)&hspi->Instance->TXDR) =  (uint16_t )pData;
+				LCD_TxDataCount--;
+			}
+		}
+		else
+		{
+			/* Timeout management */
+			if ((((HAL_GetTick() - tickstart) >=  Timeout) && (Timeout != HAL_MAX_DELAY)) || (Timeout == 0U))
+			{
+				/* Call standard close procedure with error check */
+				LCD_SPI_CloseTransfer(hspi);
+
+				/* Process Unlocked */
+				__HAL_UNLOCK(hspi);
+
+				SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_TIMEOUT);
+				hspi->State = HAL_SPI_STATE_READY;
+				return HAL_ERROR;
+			}
+		}
+	}
+
+	if (LCD_SPI_WaitOnFlagUntilTimeout(hspi, SPI_SR_TXC, RESET, tickstart, Timeout) != HAL_OK)
+	{
+		SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_FLAG);
+	}
+
+	SET_BIT((hspi)->Instance->CR1 , SPI_CR1_CSUSP); // �������SPI����
+	/* �ȴ�SPI���� */
+	if (LCD_SPI_WaitOnFlagUntilTimeout(hspi, SPI_FLAG_SUSP, RESET, tickstart, Timeout) != HAL_OK)
+	{
+		SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_FLAG);
+	}
+	LCD_SPI_CloseTransfer(hspi);   /* Call standard close procedure with error check */
+
+	SET_BIT((hspi)->Instance->IFCR , SPI_IFCR_SUSPC);  // ��������־λ
+
+
+	/* Process Unlocked */
+	__HAL_UNLOCK(hspi);
+
+	hspi->State = HAL_SPI_STATE_READY;
+
+	if (hspi->ErrorCode != HAL_SPI_ERROR_NONE)
+	{
+		return HAL_ERROR;
+	}
+	return errorcode;
+}
+
+/**
+  * @brief  רΪ����д�������޸ģ�ʹ֮���޳��ȵĴ�������
+  * @param  hspi   : spi�ľ��
+  * @param  pData  : Ҫд�������
+  * @param  Size   : ���ݴ�С
+  * @retval HAL status
+  */
+HAL_StatusTypeDef LCD_SPI_TransmitBuffer (SPI_HandleTypeDef *hspi, uint16_t *pData, uint32_t Size)
+{
+   uint32_t    tickstart;  
+   uint32_t    Timeout = 1000;      // ��ʱ�ж�
+   uint32_t    LCD_TxDataCount;     // �������
+   HAL_StatusTypeDef errorcode = HAL_OK;
+
+	/* Check Direction parameter */
+	assert_param(IS_SPI_DIRECTION_2LINES_OR_1LINE_2LINES_TXONLY(hspi->Init.Direction));
+
+	/* Process Locked */
+	__HAL_LOCK(hspi);
+
+	/* Init tickstart for timeout management*/
+	tickstart = HAL_GetTick();
+
+	if (hspi->State != HAL_SPI_STATE_READY)
+	{
+		errorcode = HAL_BUSY;
+		__HAL_UNLOCK(hspi);
+		return errorcode;
+	}
+
+	if ( Size == 0UL)
+	{
+		errorcode = HAL_ERROR;
+		__HAL_UNLOCK(hspi);
+		return errorcode;
+	}
+
+	/* Set the transaction information */
+	hspi->State       = HAL_SPI_STATE_BUSY_TX;
+	hspi->ErrorCode   = HAL_SPI_ERROR_NONE;
+
+	LCD_TxDataCount   = Size;                // ��������ݳ���
+
+	/*Init field not used in handle to zero */
+	hspi->pRxBuffPtr  = NULL;
+	hspi->RxXferSize  = (uint16_t) 0UL;
+	hspi->RxXferCount = (uint16_t) 0UL;
+	hspi->TxISR       = NULL;
+	hspi->RxISR       = NULL;
+
+	/* Configure communication direction : 1Line */
+	if (hspi->Init.Direction == SPI_DIRECTION_1LINE)
+	{
+		SPI_1LINE_TX(hspi);
+	}
+
+// ��ʹ��Ӳ�� TSIZE ���ƣ��˴�����Ϊ0���������ƴ�������ݳ���
+	MODIFY_REG(hspi->Instance->CR2, SPI_CR2_TSIZE, 0);
+
+	/* Enable SPI peripheral */
+	__HAL_SPI_ENABLE(hspi);
+
+	if (hspi->Init.Mode == SPI_MODE_MASTER)
+	{
+		 /* Master transfer start */
+		 SET_BIT(hspi->Instance->CR1, SPI_CR1_CSTART);
+	}
+
+	/* Transmit data in 16 Bit mode */
+	while (LCD_TxDataCount > 0UL)
+	{
+		/* Wait until TXP flag is set to send data */
+		if (__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_TXP))
+		{
+			if ((LCD_TxDataCount > 1UL) && (hspi->Init.FifoThreshold > SPI_FIFO_THRESHOLD_01DATA))
+			{
+				*((__IO uint32_t *)&hspi->Instance->TXDR) = *((uint32_t *)pData);
+				pData += 2;
+				LCD_TxDataCount -= 2;
+			}
+			else
+			{
+				*((__IO uint16_t *)&hspi->Instance->TXDR) = *((uint16_t *)pData);
+				pData += 1;
+				LCD_TxDataCount--;
+			}
+		}
+		else
+		{
+			/* Timeout management */
+			if ((((HAL_GetTick() - tickstart) >=  Timeout) && (Timeout != HAL_MAX_DELAY)) || (Timeout == 0U))
+			{
+				/* Call standard close procedure with error check */
+				LCD_SPI_CloseTransfer(hspi);
+
+				/* Process Unlocked */
+				__HAL_UNLOCK(hspi);
+
+				SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_TIMEOUT);
+				hspi->State = HAL_SPI_STATE_READY;
+				return HAL_ERROR;
+			}
+		}
+	}
+
+	if (LCD_SPI_WaitOnFlagUntilTimeout(hspi, SPI_SR_TXC, RESET, tickstart, Timeout) != HAL_OK)
+	{
+		SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_FLAG);
+	}
+
+	SET_BIT((hspi)->Instance->CR1 , SPI_CR1_CSUSP); // �������SPI����
+	/* �ȴ�SPI���� */
+	if (LCD_SPI_WaitOnFlagUntilTimeout(hspi, SPI_FLAG_SUSP, RESET, tickstart, Timeout) != HAL_OK)
+	{
+		SET_BIT(hspi->ErrorCode, HAL_SPI_ERROR_FLAG);
+	}
+	LCD_SPI_CloseTransfer(hspi);   /* Call standard close procedure with error check */
+
+	SET_BIT((hspi)->Instance->IFCR , SPI_IFCR_SUSPC);  // ��������־λ
+
+
+	/* Process Unlocked */
+	__HAL_UNLOCK(hspi);
+
+	hspi->State = HAL_SPI_STATE_READY;
+
+	if (hspi->ErrorCode != HAL_SPI_ERROR_NONE)
+	{
+		return HAL_ERROR;
+	}
+	return errorcode;
+}
+
+
+
+

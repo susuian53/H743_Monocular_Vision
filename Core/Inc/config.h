@@ -36,4 +36,10 @@ extern const int DIST_CAL_TABLE_SIZE;
 #define OTSU_BLACK_RATIO_MIN    0.10f
 #define OTSU_BLACK_RATIO_MAX    0.90f
 #define ADAPTIVE_BLOCK_SIZE     41
-#define ADAPTIVE_CONSTANT
+#define ADAPTIVE_CONSTANT_C     8
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __CONFIG_H */

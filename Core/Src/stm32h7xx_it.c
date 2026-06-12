@@ -254,4 +254,38 @@ void DCMI_IRQHandler(void)
   HAL_DCMI_IRQHandler(&hdcmi);
   /* USER CODE BEGIN DCMI_IRQn 1 */
 
-  /* 
+  /* USER CODE END DCMI_IRQn 1 */
+}
+
+/* USER CODE BEGIN 1 */
+
+extern volatile uint8_t measure_trigger;
+extern volatile uint8_t OV5640_FrameState;
+
+/**
+  * @brief  EXTI line detection callbacks.
+  * @param  GPIO_Pin: Specifies the pins connected EXTI line
+  * @retval None
+  */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  if(GPIO_Pin == GPIO_PIN_4) // K1 button
+  {
+    // Set the trigger flag for the main loop
+    measure_trigger = 1;
+  }
+}
+
+/**
+  * @brief  DCMI frame event callback.
+  * @param  hdcmi: pointer to a DCMI_HandleTypeDef structure that contains
+  *                the configuration information for DCMI.
+  * @retval None
+  */
+void HAL_DCMI_FrameEventCallback(DCMI_HandleTypeDef *hdcmi)
+{
+    // Set the frame captured flag for the main loop
+    OV5640_FrameState = 1;
+}
+
+/* USER CODE END 1 */
